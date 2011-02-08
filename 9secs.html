@@ -1,0 +1,91 @@
+<!-- Mindtouch DekiWiki script -->
+<input type="button" value="9 seconds droplet" ctor="when($this.click) {  
+  var propname = 'urn:custom.mindtouch.com#avatars';
+  var t0 = new Date();
+  var offset = 7 * 60 * 60 * 1000;
+  var t1 = new Date();
+  t1.setTime(t0.getTime() - offset);
+  var tnowu = (t1.getTime() / 1000).toFixed(); // unix time
+  var timehr  = t1.getUTCHours();
+  var timemin = t1.getUTCMinutes();
+  var t_hrS   = timehr < 10 ? '0' + timehr : '' + timehr;
+  var t_minS  = timemin < 10 ? '0' + timemin : '' + timemin;
+  //alert('Time Now (SLT): ' + t1.getUTCFullYear() + '/' + (t1.getUTCMonth() + 1) 
+  //  + '/' + t1.getUTCDate() + ' ' + t_hrS + ':' + t_minS);
+  $.ajax({
+    url: {{page.api}} + '/properties?dream.out.format=json&names=' + Deki.url.encode(propname),
+    type: 'GET',
+    cache: false,
+    complete: function(xhr) {
+      if(xhr.status == 200) {
+        var data = eval('(' + xhr.responseText + ')');
+        var href = data.property && data.property.contents['@href'];
+        var etag = data.property && data.property['@etag'];
+        var oldval = data.property && data.property.contents['#text'];
+        // extract the 10 character timestamp
+        var tdropu = oldval.substring(0,10);
+        var tdrp = new Date(parseInt(tdropu) * 1000);
+        if(href && etag) {
+          var newval = 'nada';
+          alert('Now ' + tnowu + ', Target ' + tdropu);
+          if (tnowu > parseInt(tdropu) + 300) {  // restart if 5 minutes past the boundary 
+            alert('restarting');
+            if (timemin < 15) {
+              t1.setUTCMinutes(0);
+            } else if (timemin < 30) {
+              t1.setUTCMinutes(15);
+            } else if (timemin < 45) {
+              t1.setUTCMinutes(30);
+            } else {
+              t1.setUTCMinutes(45);
+            }        
+            t1.setUTCMinutes(t1.getUTCMinutes() + 15);
+            tdropu = (t1.getTime() / 1000).toFixed();
+            newval = tdropu + ', ' + {{user.name}};
+            alert('New time for next droplet set, to ' + t1.getUTCHours() + ':' + t1.getUTCMinutes()
+                + ', ' + newval);
+            tdrp = t1;
+            alert('tdrp time: ' + tdrp.getUTCHours() + ':' + tdrp.getUTCMinutes());
+          }
+          else {
+            if(oldval.indexOf({{user.name}}) == -1) {   // avatar not already in list
+              newval = oldval + ', ' + {{user.name}};
+            } 
+            else {
+              newval = oldval;
+            }
+          }          
+          $.ajax({
+            url: href + '?dream.in.verb=PUT',
+            type: 'POST',
+            data: newval,
+            contentType: 'text/xml',
+            processData: false,
+            beforeSend: function(xhr) {
+              xhr.setRequestHeader('ETag', etag);
+              return true;
+            },
+            complete: function(xhr) {              
+              if(xhr.status == 200) {
+                var uhrs = tdrp.getUTCHours();
+                var uhrsS = uhrs < 10 ? '0' + uhrs : '' + uhrs;
+                var umins = tdrp.getUTCMinutes();
+                var uminsS = umins < 10 ? '0' + umins : '' + umins;
+                var msg = 'Present for ' + uhrsS + ':' + uminsS 
+                  + ' (SLT) droplet: ' + newval.substring(12);
+                alert('msg: ' + msg);
+                var newcontent = document.createTextNode(msg);
+                var place = document.getElementById('show_avs');
+                var oldcontent = document.getElementById('text_avs');
+                place.replaceChild(newcontent, oldcontent);
+                newcontent.id = 'text_avs';
+              } else {
+                alert('Unable to update avatars list');
+              }          
+            }
+          });
+        }
+      }
+    }
+  });
+}" />
