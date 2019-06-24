@@ -1,0 +1,7 @@
+# Play as Being Apps
+
+- Mark Szpakowski
+
+1) 2011-02-09: 9secs app - copied from wiki.playasbeing.org
+
+[Play as Being Basic Ideas](https://wiki.playasbeing.org/About_PlayAsBeing/Basic_Ideas)
